@@ -1125,7 +1125,6 @@ def toy_scenario_for_pmf():
 if __name__ == "__main__":
     try:
         jvm.start()
-        # docs, labels = get_r8_data()
         # ============== EN ============================================================
         train, test, train_lbl, test_lbl = get_pan_dataset()
         # hold_out_classification_without_fs_2(train, test, train_lbl, test_lbl)
