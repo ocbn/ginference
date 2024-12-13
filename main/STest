@@ -1,0 +1,80 @@
+import os
+from statsmodels.stats.contingency_tables import mcnemar
+import numpy as np
+
+
+def extract_actual_and_predicted_labels(base):
+    actual, predicted = [], []
+    for b in base:
+        if "Actual" in b:
+            b = b.strip().rstrip().split(":")[1].replace("[", "").replace("]", "")
+            if "," in b:
+                actual = [int(v.strip().rstrip()) for v in b.split(",")]
+            else:
+                actual = [int(v.strip().rstrip()) for v in b.split()]
+        elif "Predicted" in b:
+            b = b.strip().rstrip().split(":")[1].replace("[", "").replace("]", "")
+            if "," in b:
+                predicted = [int(v.strip().rstrip()) for v in b.split(",")]
+            else:
+                predicted = [int(v.strip().rstrip()) for v in b.split()]
+    return actual, predicted
+
+
+def read_case_outputs():
+    path = "../data/stest"
+    tr, en = {}, {}
+    for f in os.listdir(path):
+        f_path = path + "/" + f
+        file = open(f_path, "r")
+        lines = file.readlines()
+        if "tr" in f:
+            actual, predicted = extract_actual_and_predicted_labels(lines)
+            tr[f] = {"A": None, "P": None}
+            tr[f]["A"] = actual
+            tr[f]["P"] = predicted
+        else:
+            actual, predicted = extract_actual_and_predicted_labels(lines)
+            en[f] = {"A": None, "P": None}
+            en[f]["A"] = actual
+            en[f]["P"] = predicted
+    return tr, en
+
+
+def test():
+    tr, en = read_case_outputs()
+    print("McNemar Test Results for Cases on Turkish Dataset")
+    mc_nemar(tr)
+    print("McNemar Test Results for Cases on English Dataset")
+    mc_nemar(en)
+
+
+def mc_nemar(d):
+    for k, v in d.items():
+        a = v["A"]
+        p1 = v["P"]
+        for kk, vv in d.items():
+            print("[Model 1: {}]".format(k), end=" ")
+            print("[Model 2: {}]".format(kk), end=" ")
+            if k == kk:
+                print("\nTwo models are the same!")
+            else:
+                p2 = vv["P"]
+                n00, n01, n10, n11 = 0, 0, 0, 0
+                for idx in range(len(a)):
+                    t = a[idx]
+                    if p1[idx] == t and p2[idx] == t:
+                        n11 = n11 + 1
+                    elif p1[idx] == t and p2[idx] != t:
+                        n10 = n10 + 1
+                    elif p1[idx] != t and p2[idx] == t:
+                        n01 = n01 + 1
+                    else:
+                        n00 = n00 + 1
+                m = [[n00, n01], [n10, n11]]
+                print("\nContingency matrix of two models: {}".format(m))
+                print(mcnemar(m, exact=False))
+            print("*" * 50)
+
+
+test()
